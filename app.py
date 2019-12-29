@@ -22,7 +22,7 @@ SECRET= os.environ['CHANNEL_SECRET']
 # Channel Access Token
 line_bot_api = LineBotApi(ACCESS_TOKEN)
 # Channel Secret
-handler = WebhookHandler(CHANNEL_SECRET)
+handler = WebhookHandler(SECRET)
 
 pm_site = {}
 

@@ -22,13 +22,13 @@ SECRET= os.environ['CHANNEL_SECRET']
 # Channel Access Token
 line_bot_api = LineBotApi(ACCESS_TOKEN)
 # Channel Secret
-handler = WebhookHandler(SECRET)
+handler = WebhookHandler(CHANNEL_SECRET)
 
 pm_site = {}
 
 @app.route("/")
 def hello_world():
-    return "hello world!"
+    return "歡迎使用此LINE BOT"
 
 
 # 監聽所有來自 /callback 的 Post Request

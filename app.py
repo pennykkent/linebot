@@ -28,7 +28,7 @@ pm_site = {}
 
 @app.route("/")
 def hello_world():
-    return "歡迎使用此LINE BOT!"
+    return "歡迎使用此LINE BOT!!!"
 
 
 # 監聽所有來自 /callback 的 Post Request

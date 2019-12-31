@@ -62,68 +62,91 @@ def handle_message(event):
     _low_token = _token[0].lower()
     
     # query THU courses
-    if '課程' in _token[0] or '課表' in _token[0]:
-        cls_list = getCls(_token[1])
-        for cls in cls_list:
-            _message = TextSendMessage(text=cls)	#reply course
-            line_bot_api.reply_message(event.reply_token, _message)
-#            line_bot_api.push_message(event.source.user_id, TextSendMessage(text='123'))
-    elif '誠品' in _token[0] or '書單' in _token[0]:
-        bookls = find_bookls(_token[1])
-        _message = TextSendMessage(text=bookls)	#reply course
-        line_bot_api.reply_message(event.reply_token, _message)
-    elif '空氣' in _token[0] or 'pm2' in _low_token:
-        # query PM2.5
-        for _site in pm_site:
-            if _site == _token[1]:
-                _message = TextSendMessage(text=pm_site[_site]) #reply pm2.5 for the site
-                line_bot_api.reply_message(event.reply_token, _message)
-                break;
-    elif '!h' in _token[0] or '!help' in _token[0]:
-        _message = TextSendMessage(text="請輸入:課程, 誠品, 空氣 + <關鍵字>")
-        line_bot_api.reply_message(event.reply_token, _message)
+ if event.message.text == "蘋果即時新聞":
+        content = apple_news()
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=content))
+        return 0
+
+if event.message.text == "近期上映電影":
+        content = movie()
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=content))
+        return 0
+
+if event.message.text == "科技新聞":
+        content = technews()
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=content))
+        return 0
+
+if event.message.text == "油價查詢":
+        content = oil_price()
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=content))
+        return 0
 	
-def find_bookls(kw):
-    with open("ESLITE.json",'r') as load_f:
-        load_dict = json.load(load_f)
-    x = load_dict['items']
-    ans = ()
-    for i in x:
-        #if i['title'] == "title":
-        if i['title'].find(str(kw))== -1:
-            pass
-#             print("")
-        else:
-            ans= (i['title']+i['link'])
-#             print (i['title'], i['link'])
-    return ans
+def technews():
+    target_url = 'https://technews.tw/'
+    print('Start parsing movie ...')
+    rs = requests.session()
+    res = rs.get(target_url, verify=False)
+    res.encoding = 'utf-8'
+    soup = BeautifulSoup(res.text, 'html.parser')
+    content = ""
 
-def loadPMJson():
-    with urllib.request.urlopen("http://opendata2.epa.gov.tw/AQI.json") as url:
-        data = json.loads(url.read().decode())
-        for ele in data:
-            pm_site[ele['SiteName']] = ele['PM2.5']
+    for index, data in enumerate(soup.select('article div h1.entry-title a')):
+        if index == 12:
+            return content
+        title = data.text
+        link = data['href']
+        content += '{}\n{}\n\n'.format(title, link)
+    return content
 
-def getCls(cls_prefix):
-    ret_cls = []
-    urlstr = 'https://course.thu.edu.tw/search-result/10/1/'
-    postfix = '/all/all'
-    
-    qry_cls = urlstr + cls_prefix + postfix
-    
-    resp = requests.get(qry_cls)
-    resp.encoding = 'utf-8'
-    soup = BeautifulSoup(resp.text, 'lxml')
-    clsrooms = soup.select('table.aqua_table tbody tr')
-    for cls in clsrooms:
-        cls_info = cls.find_all('td')[1]
-        cls_name = cls_info.text.strip()
-        sub_url = 'https://course.thu.edu.tw' + cls_info.find('a')['href']
-        ret_cls.append(cls_name + " " + sub_url)
-        break
-#         ret_cls = ret_cls + sub_url + "\n"
+def movie():
+    target_url = 'https://movies.yahoo.com.tw/movie_intheaters.html'
+    print('Start parsing movie ...')
+    rs = requests.session()
+    res = rs.get(target_url, verify=False)
+    res.encoding = 'utf-8'
+    soup = BeautifulSoup(res.text, 'html.parser')
+    content = ""
+    for index, data in enumerate(soup.select('ul.filmNextListAll a')):
+        if index == 20:
+            return content
+        title = data.text.replace('\t', '').replace('\r', '')
+        link = "http://www.atmovies.com.tw" + data['href']
+        content += '{}\n{}\n'.format(title, link)
+    return content
 
-    return ret_cls
+def apple_news():
+    target_url = 'https://tw.appledaily.com/new/realtime'
+    print('Start parsing appleNews....')
+    rs = requests.session()
+    res = rs.get(target_url, verify=False)
+    soup = BeautifulSoup(res.text, 'html.parser')
+    content = ""
+    for index, data in enumerate(soup.select('.rtddt a'), 0):
+        if index == 5:
+            return content
+        link = data['href']
+        content += '{}\n\n'.format(link)
+    return content
+
+def oil_price():
+    target_url = 'https://gas.goodlife.tw/'
+    rs = requests.session()
+    res = rs.get(target_url, verify=False)
+    soup = BeautifulSoup(res.text, 'html.parser')
+    title = soup.select('#main')[0].text.replace('\n', '').split('(')[0]
+    gas_price = soup.select('#gas-price')[0].text.replace('\n\n\n', '').replace(' ', '')
+    cpc = soup.select('#cpc')[0].text.replace(' ', '')
+    content = '{}\n{}{}'.format(title, gas_price, cpc)
+    return content
         
             
 import os
